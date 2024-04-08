@@ -288,7 +288,7 @@ t.adm2 <- calculate_percentage_target(arrange_data_target(target.adm2,adm.level 
 
 # Create list of dataframes
 df_list <- list(
-  'DATA' = df,
+  # 'DATA' = df,
   'adm0_target' = t.adm0,
   'adm0_ind_obj' = df.adm0,
   
