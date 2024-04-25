@@ -15,10 +15,10 @@ folder <- getwd()
 file1 <- "345WDataset_MD87.xlsx"
 data <- read.xlsx(xlsxFile = paste0(folder,'/01_input/',file1), sheet ='Hoja-1', startRow = 2)
 
-file2 <- "2024_clusters_indicadores.xlsx"
+file2 <- "2024_adr_nna_indicadores.xlsx"
 indicators <- read.xlsx(xlsxFile = paste0(folder,'/01_input/',file2), sheet ='nna', startRow = 1, fillMergedCells = TRUE, colNames = TRUE)
 
-file3 <- "2024_clusters_indicadores.xlsx"
+file3 <- "2024_adr_nna_indicadores.xlsx"
 clean_data <- read.xlsx(xlsxFile = paste0(folder,'/01_input/',file3), sheet ='cleaning', startRow = 1, fillMergedCells = TRUE, colNames = TRUE)
 
 file4 <- "desagregacion_label.xlsx"
