@@ -15,10 +15,10 @@ folder <- getwd()
 file1 <- "345WDataset_MD87.xlsx"
 data <- read.xlsx(xlsxFile = paste0(folder,'/01_input/',file1), sheet ='Hoja-1', startRow = 2)
 
-file2 <- "2024_adr_nna_indicadores.xlsx"
+file2 <- "2024_clusters_indicadores.xlsx"
 indicators <- read.xlsx(xlsxFile = paste0(folder,'/01_input/',file2), sheet ='nna', startRow = 1, fillMergedCells = TRUE, colNames = TRUE)
 
-file3 <- "2024_adr_nna_indicadores.xlsx"
+file3 <- "2024_clusters_indicadores.xlsx"
 clean_data <- read.xlsx(xlsxFile = paste0(folder,'/01_input/',file3), sheet ='cleaning', startRow = 1, fillMergedCells = TRUE, colNames = TRUE)
 
 file4 <- "desagregacion_label.xlsx"
@@ -26,8 +26,8 @@ name_labels <- read.xlsx(xlsxFile = paste0(folder,'/01_input/',file4), startRow 
 
 
 # EXPORT FILES ------------------------------------------------------------
-output <- "2024_03_adr_adr_nna_analisis_345W_2"
-output.ocha <- "2024_03_adr_nna_345w_ocha_2"
+output <- "2024_04_adr_adr_nna_analisis_345W_2"
+output.ocha <- "2024_04_adr_nna_345w_ocha_2"
 col_width <- 20
 
 
@@ -64,7 +64,9 @@ df<-df %>%
   mutate(across(all_of(c(col.reach.type, col.reach.disagg)), as.numeric)) %>% 
   mutate(across(all_of(c(col.reach.type, col.reach.disagg)), ~ ifelse(is.nan(.)| is.na(.), 0, .)))
 
-
+# # create name of location check
+df<-data_name_tolower_remove_space_dots(df,location)
+location <- 'name_check'
 
 # CLEAN DATA --------------------------------------------------------------
 # Replace to 0 children activities that have adult disagregation
@@ -96,6 +98,9 @@ df <- df %>%
   mutate(across(all_of(children),
                 ~ ifelse(grepl(paste(act.adult, collapse = "|"), .data[[col.activity]]), 0, .)))
 
+df <- df %>%
+  mutate(!!sym(col.reached) := rowSums(select(., col.reach.disagg[-1]), na.rm = TRUE))
+
 # Indicador 1.1.2.4 -------------------------------------------------------------
 # de NNA y personas cuidadoras afectados y en riesgo con acceso a actividades de salud mental y apoyo psicosocial individual y grupal utilizando un enfoque diferencial de género, edad y diversidad
 # 2.13: Proveer actividades de salud mental y apoyo psicosocial individual a NNA en riesgo y con necesidades de protección con enfoque de género, edad y diversidad
@@ -109,14 +114,14 @@ name.act <- unlist((indicators %>% filter(indicator == indicators.list[1, "indic
 name.ind <- unique(unlist((indicators %>% filter(indicator == indicators.list[1, "indicator"]) %>% select(indicator))))
 
 name.max <- c("2.13","2.14")
-temp1<-calculate_max(data = df,activity = name.max,aggregation = c(adm.level[[3]],location, col.activity),targets_summarise = c(col.reach.type, col.reach.disagg))
+temp1<-calculate_max(data = df,activity = name.max, aggregation = c(adm.level[[3]],col.location.type,location),targets_summarise = c(col.reach.type, col.reach.disagg))
 
 name.max <-c("2.15","2.16")
-temp2<-calculate_max(data = df,activity = name.max,aggregation = c(adm.level[[3]],location, col.activity),targets_summarise = c(col.reach.type, col.reach.disagg))
+temp2<-calculate_max(data = df,activity = name.max, aggregation = c(adm.level[[3]],col.location.type,location),targets_summarise = c(col.reach.type, col.reach.disagg))
 
 temp <- bind_rows(temp1, temp2)
 temp <- calculate_sum(data = temp,
-                      activity = name.act,
+                      activity = "none",
                       aggregation = adm.level[[3]],
                       targets_summarise = c(col.reach.type,col.reach.disagg)) 
 
@@ -170,7 +175,7 @@ ind.2213 <- temp %>%
 name.act <- unlist((indicators %>% filter(indicator == indicators.list[4, "indicator"]) %>% select(number_activity)))
 name.ind <- unique(unlist((indicators %>% filter(indicator == indicators.list[4, "indicator"]) %>% select(indicator))))
 
-temp <- calculate_sum(df %>% filter(tolower(!!sym(col.loc.type))!="virtual"),
+temp <- calculate_sum(df %>% filter(tolower(!!sym(col.location.type))!="virtual"),
                               activity=name.act,
                               aggregation = c(adm.level[[3]]),
                               targets_summarise = c(col.reach.type, col.reach.disagg))
@@ -227,7 +232,6 @@ temp <- calculate_sum(data = df,
 
 ind.3322 <- temp %>% 
   mutate(indicator = unique(name.ind),.before = 1) 
-
 
 
 # INDICATOR TOTAL ---------------------------------------------------------
@@ -361,7 +365,7 @@ t.adm2 <- t.adm2 %>%
 
 # Create list of dataframes
 df_list <- list(
-  'DATA' = data,
+  'DATA' = df %>% select(-name_check),
   'adm0_target' = t.adm0,
   'adm0_ind' = df.adm0,
   

@@ -4,6 +4,14 @@
 # VARIABLES
 
 # FUNCTION ----------------------------------------------------------------
+# function to remote special caracters, spaces, comma, dot,etc from location name
+data_name_tolower_remove_space_dots <- function(data, data.name) {
+  data <- data %>%
+    mutate(name_check = str_to_lower(str_trim(str_replace_all(!!sym(data.name), "\\s+|\\.|-|\\(|\\)|\\[]|,|:|º|°", ""))))
+  data$name_check<-stringi::stri_trans_general(data$name_check, "Latin-ASCII")
+  return(data)
+}
+
 
 # Function to calculate sum based on specified activity, aggregation, and targets to summarize
 calculate_sum <- function(data, activity, aggregation, targets_summarise){
@@ -28,13 +36,14 @@ calculate_max <- function(data, activity, aggregation, targets_summarise){
   
   data.agg <- data %>%
     group_by_at(vars(aggregation)) %>%
-    summarize(across(targets_summarise, max)) %>%
+    summarize(across(all_of(targets_summarise), max)) %>%
     ungroup()
   
   # # Semi-join data with aggregated data to get filtered data
   # filtered_data <- semi_join(data, data.agg, by = c(aggregation))
   return(data.agg)
 }
+
 
 # Calculate total counts for each gender and age group
 calculate_age_gender_disaggregation <- function(data){
@@ -132,6 +141,9 @@ calculate_percentage_target <- function(data, adm.level){
 
 # VARIABLES ---------------------------------------------------------------
 
+# AoR or Cluster
+col.sector <- '#sector'
+
 # Administrative Levels
 adm0 <- c("#adm0+name", "#adm0+code")
 adm1 <- c("#adm1+code", "#adm1+name")
@@ -143,7 +155,8 @@ adm.level <- list(adm1, adm12, adm123)
 
 # Location Identifier
 location <- "#location"
-col.loc.type <- "#location+type"
+col.location <- "#location"
+col.location.type <- "#location+type"
 
 # Columns related to Activities
 col.activity <- "#activity+name+selected"
